@@ -1,15 +1,12 @@
 pub mod i2c;
-pub mod spi;
 
 #[cfg(test)]
 pub mod mock_i2c_port;
 
 use core::ops::Shl;
-
-use embedded_hal::blocking::delay::DelayMs;
-
-#[cfg(feature = "rttdebug")]
-use panic_rtt_core::rprintln;
+#[cfg(feature = "defmt")]
+use defmt::println;
+use embedded_hal_async::delay::DelayNs;
 
 /// A method of communicating with the sensor
 pub trait SensorInterface {
@@ -17,32 +14,35 @@ pub trait SensorInterface {
     type SensorError;
 
     /// give the sensor interface a chance to set up
-    fn setup(
+    async fn setup(
         &mut self,
-        delay_source: &mut impl DelayMs<u8>,
+        delay_source: &mut impl DelayNs,
     ) -> Result<(), Self::SensorError>;
 
     /// Write the whole packet provided
-    fn write_packet(&mut self, packet: &[u8]) -> Result<(), Self::SensorError>;
+    async fn write_packet(
+        &mut self,
+        packet: &[u8],
+    ) -> Result<(), Self::SensorError>;
 
     /// Read the next packet from the sensor
     /// Returns the size of the packet read (up to the size of the slice provided)
-    fn read_packet(
+    async fn read_packet(
         &mut self,
         recv_buf: &mut [u8],
     ) -> Result<usize, Self::SensorError>;
 
     /// Wait for sensor to indicate it has data available before reading
     /// - `max_ms` maximum number of milliseconds to wait for data
-    fn read_with_timeout(
+    async fn read_with_timeout(
         &mut self,
         recv_buf: &mut [u8],
-        delay_source: &mut impl DelayMs<u8>,
+        delay_source: &mut impl DelayNs,
         max_ms: u8,
     ) -> Result<usize, Self::SensorError>;
 
     /// Send a packet and receive the response immediately
-    fn send_and_receive_packet(
+    async fn send_and_receive_packet(
         &mut self,
         send_buf: &[u8],
         recv_buf: &mut [u8],
@@ -53,7 +53,6 @@ pub trait SensorInterface {
 }
 
 pub use self::i2c::I2cInterface;
-pub use self::spi::SpiInterface;
 
 pub(crate) const PACKET_HEADER_LENGTH: usize = 4;
 pub(crate) const MAX_CARGO_DATA_LENGTH: usize = 32766 - PACKET_HEADER_LENGTH;
@@ -79,8 +78,8 @@ impl SensorCommon {
         }
 
         if 0 == packet_len && 0 != raw_pack_len {
-            #[cfg(feature = "rttdebug")]
-            rprintln!(
+            #[cfg(feature = "defmt")]
+            println!(
                 "pph: {:?} {} -> {}",
                 &packet[..PACKET_HEADER_LENGTH],
                 raw_pack_len,

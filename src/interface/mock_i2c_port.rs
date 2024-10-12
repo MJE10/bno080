@@ -3,16 +3,17 @@ extern crate std;
 use super::PACKET_HEADER_LENGTH;
 
 use core::ops::Shr;
-use embedded_hal::blocking::{
-    delay::DelayMs,
-    i2c::{Read, Write, WriteRead},
+use embedded_hal_async::delay::DelayNs;
+use embedded_hal_async::i2c::{
+    ErrorKind, ErrorType, Operation, SevenBitAddress,
 };
 use std::collections::VecDeque;
 
+#[allow(dead_code)]
 struct FakeDelay {}
 
-impl DelayMs<u8> for FakeDelay {
-    fn delay_ms(&mut self, _ms: u8) {
+impl DelayNs for FakeDelay {
+    async fn delay_ns(&mut self, _ns: u32) {
         // no-op
     }
 }
@@ -59,10 +60,25 @@ impl FakeI2cPort {
     }
 }
 
-impl Read for FakeI2cPort {
-    type Error = ();
+#[derive(Debug)]
+pub struct FakeI2cError;
 
-    fn read(&mut self, addr: u8, buffer: &mut [u8]) -> Result<(), Self::Error> {
+impl embedded_hal_async::i2c::Error for FakeI2cError {
+    fn kind(&self) -> ErrorKind {
+        ErrorKind::Other
+    }
+}
+
+impl ErrorType for FakeI2cPort {
+    type Error = FakeI2cError;
+}
+
+impl embedded_hal_async::i2c::I2c for FakeI2cPort {
+    async fn read(
+        &mut self,
+        addr: SevenBitAddress,
+        buffer: &mut [u8],
+    ) -> Result<(), Self::Error> {
         let next_pack =
             self.available_packets.pop_front().unwrap_or(FakePacket {
                 addr: addr,
@@ -107,29 +123,33 @@ impl Read for FakeI2cPort {
 
         Ok(())
     }
-}
 
-impl Write for FakeI2cPort {
-    type Error = ();
-
-    fn write(&mut self, _addr: u8, _bytes: &[u8]) -> Result<(), Self::Error> {
-        let sent_pack = FakePacket::new_from_slice(_bytes);
+    async fn write(
+        &mut self,
+        _address: SevenBitAddress,
+        bytes: &[u8],
+    ) -> Result<(), Self::Error> {
+        let sent_pack = FakePacket::new_from_slice(bytes);
         self.sent_packets.push_back(sent_pack);
         Ok(())
     }
-}
 
-impl WriteRead for FakeI2cPort {
-    type Error = ();
-
-    fn write_read(
+    async fn write_read(
         &mut self,
-        address: u8,
+        address: SevenBitAddress,
         send_buf: &[u8],
         recv_buf: &mut [u8],
     ) -> Result<(), Self::Error> {
-        self.write(address, send_buf)?;
-        self.read(address, recv_buf)?;
+        self.write(address, send_buf).await?;
+        self.read(address, recv_buf).await?;
         Ok(())
+    }
+
+    async fn transaction(
+        &mut self,
+        _address: SevenBitAddress,
+        _operations: &mut [Operation<'_>],
+    ) -> Result<(), Self::Error> {
+        todo!()
     }
 }

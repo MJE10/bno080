@@ -4,6 +4,8 @@ LICENSE: BSD3 (see LICENSE file)
 */
 
 #![no_std]
+#![allow(async_fn_in_trait)]
+extern crate embedded_hal_async;
 
 pub mod interface;
 pub mod wrapper;
