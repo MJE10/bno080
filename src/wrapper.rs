@@ -100,7 +100,6 @@ impl<SI> BNO080<SI> {
 impl<SI, SE> BNO080<SI>
 where
     SI: SensorInterface<SensorError = SE>,
-    SE: core::fmt::Debug,
 {
     /// Consume all available messages on the port without processing them
     pub async fn eat_all_messages(&mut self, delay: &mut impl DelayNs) {
@@ -154,7 +153,7 @@ where
             }
         } else {
             #[cfg(feature = "defmt")]
-            println!("handle1 err {:?}", res);
+            println!("handle1 err");
         }
 
         msg_count
@@ -171,7 +170,7 @@ where
             received_len
         } else {
             #[cfg(feature = "defmt")]
-            println!("e1 err {:?}", res);
+            println!("e1 err");
             0
         }
     }
@@ -427,12 +426,12 @@ where
                         println!("feat resp: {}", msg[5]);
                     }
                     _ => {
-                        #[cfg(feature = "defmt")]
-                        println!(
-                            "unh hbc: 0x{:X} {:x?}",
-                            report_id,
-                            &msg[..PACKET_HEADER_LENGTH]
-                        );
+                        // #[cfg(feature = "defmt")]
+                        // println!(
+                        //     "unh hbc: 0x{:X} {:x?}",
+                        //     report_id,
+                        //     &msg[..PACKET_HEADER_LENGTH]
+                        // );
                     }
                 }
             }
