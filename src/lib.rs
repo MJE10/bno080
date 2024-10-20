@@ -11,7 +11,8 @@ pub mod interface;
 pub mod wrapper;
 
 /// Errors in this crate
-#[derive(Debug)]
+#[derive(Clone, Debug)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum Error<CommE, PinE> {
     /// Sensor communication error
     Comm(CommE),
