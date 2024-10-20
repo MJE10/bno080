@@ -16,6 +16,7 @@ const PACKET_RECV_BUF_LEN: usize = 1024;
 const NUM_CHANNELS: usize = 6;
 
 #[derive(Debug)]
+#[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum WrapperError<E> {
     ///Communications error
     CommError(E),
