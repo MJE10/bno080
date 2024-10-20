@@ -8,6 +8,7 @@ use crate::interface::{SensorInterface, PACKET_HEADER_LENGTH};
 use core::ops::Shr;
 #[cfg(feature = "defmt")]
 use defmt::println;
+use defmt::Format;
 use embedded_hal_async::delay::DelayNs;
 
 const PACKET_SEND_BUF_LEN: usize = 256;
@@ -15,7 +16,7 @@ const PACKET_RECV_BUF_LEN: usize = 1024;
 
 const NUM_CHANNELS: usize = 6;
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 #[cfg_attr(feature = "defmt", derive(defmt::Format))]
 pub enum WrapperError<E> {
     ///Communications error
