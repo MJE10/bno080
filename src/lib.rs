@@ -7,6 +7,8 @@ LICENSE: BSD3 (see LICENSE file)
 #![allow(async_fn_in_trait)]
 extern crate embedded_hal_async;
 
+#[allow(dead_code)]
+pub mod constants;
 pub mod interface;
 pub mod wrapper;
 
