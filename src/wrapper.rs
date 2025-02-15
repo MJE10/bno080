@@ -316,6 +316,14 @@ where
                 SENSOR_REPORTID_MAGNETIC_FIELD => {
                     self.mag = q_triple(MAGNETOMETER_Q1)
                 }
+                SENSOR_REPORTID_GAME_ROTATION_VECTOR => {
+                    self.rotation_vector = (
+                        [data1, data2, data3, data4]
+                            .map(|x| q_to_float(x, ROTATION_VECTOR_Q1)),
+                        q_to_float(data5, ROTATION_VECTOR_ACCURACY_Q1),
+                        status,
+                    )
+                }
                 SENSOR_REPORTID_ROTATION_VECTOR => {
                     self.rotation_vector = (
                         [data1, data2, data3, data4]
